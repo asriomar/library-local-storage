@@ -20,9 +20,7 @@
   </style>
 </head>
 <body class="h-full font-sans antialiased">
-
   <div class="flex flex-col min-h-screen">
-
     <!-- Header -->
     <header class="bg-white shadow-sm border-b">
       <div class="max-w-6xl mx-auto px-4 py-4">
@@ -33,10 +31,9 @@
         <p class="text-gray-600 text-sm">Smart search for borrow & return</p>
       </div>
     </header>
-
     <!-- Navigation -->
-    <nav class="bg-white border-b shadow-sm">
-      <div class="max-w-6xl mx-auto px-4">
+    <nav class="bg-white border-b shadow-sm h-10">
+      <div class="max-w-6xl mx-auto px-4 inline-block align-middle">
         <ul class="flex space-x-1">
           <li><a href="#dashboard" class="tab nav-link tab-active" data-tab="dashboard">📊 Dashboard</a></li>
           <li><a href="#books" class="tab nav-link tab-inactive" data-tab="books">📘 Books</a></li>
@@ -45,10 +42,8 @@
         </ul>
       </div>
     </nav>
-
     <!-- Main -->
     <main class="flex-1 container mx-auto px-4 py-6 max-w-6xl space-y-6">
-
       <!-- Dashboard -->
       <section id="dashboard" class="tab-content">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -69,7 +64,6 @@
             <p id="overdue-books" class="text-3xl font-bold text-red-600 mt-2">0</p>
           </div>
         </div>
-
         <div class="bg-white p-6 rounded-xl shadow-sm border">
           <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
             <svg class="w-5 h-5"> <use href="#clock"></use> </svg>
@@ -80,7 +74,6 @@
           </ul>
         </div>
       </section>
-
       <!-- Books -->
       <section id="books" class="tab-content hidden">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-5 gap-3">
@@ -89,15 +82,19 @@
             <svg class="w-4 h-4"> <use href="#plus"></use> </svg> Add Book
           </a>
         </div>
-        <div class="mb-5">
-          <input type="text" id="searchBookGlobal" placeholder="🔍 Search by title, author, or genre..."
-                 class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <div class="mb-5 flex flex-col sm:flex-row gap-2">
+            <!-- Search Input -->
+            <input type="text" id="searchBookGlobal" placeholder="🔍 Search by title, author, or genre..."
+                class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <!-- Refresh Button -->
+            <button id="refreshBooksBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 whitespace-nowrap">
+               <svg class="w-4 h-4"> <use href="#arrow-path"></use> </svg> Refresh
+            </button>
         </div>
         <div id="books-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           <!-- Filled by JS -->
         </div>
       </section>
-
       <!-- Members -->
       <section id="members" class="tab-content hidden">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-5 gap-3">
@@ -114,11 +111,9 @@
           <!-- Filled by JS -->
         </div>
       </section>
-
       <!-- Loans -->
       <section id="loans" class="tab-content hidden">
         <h2 class="text-2xl font-semibold text-gray-800 mb-6">🔁 Borrow & Return</h2>
-
         <!-- Borrow -->
         <div class="bg-white p-6 rounded-xl shadow-sm border mb-8">
           <h3 class="text-lg font-medium text-gray-800 mb-5 flex items-center gap-2">
@@ -131,25 +126,21 @@
               <input type="text" id="searchMemberInput" placeholder="Type member ID or name..." class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"/>
               <div id="memberResults" class="search-dropdown hidden"></div>
             </div>
-
             <div class="relative">
               <label class="block text-gray-700 font-medium mb-1">Search Book (ISBN, Title, Author)</label>
               <input type="text" id="searchBookInput" placeholder="Type ISBN, title, or author..." class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"/>
               <div id="bookResults" class="search-dropdown hidden"></div>
             </div>
-
             <div id="borrowPreview" class="hidden loan-preview">
               <p><strong>Member:</strong> <span id="previewMemberName"></span> (<span id="previewMemberId"></span>)</p>
               <p><strong>Book:</strong> <span id="previewBookTitle"></span> by <span id="previewBookAuthor"></span></p>
               <p id="availabilityStatus" class="font-medium"></p>
             </div>
-
             <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-medium disabled:opacity-50" disabled>
               Confirm Borrow
             </button>
           </form>
         </div>
-
         <!-- Return -->
         <div class="bg-white p-6 rounded-xl shadow-sm border mb-8">
           <h3 class="text-lg font-medium text-gray-800 mb-5 flex items-center gap-2">
@@ -167,20 +158,17 @@
               />
               <div id="returnResults" class="search-dropdown hidden"></div>
             </div>
-
             <div id="returnPreview" class="hidden loan-preview">
               <p><strong>Loan ID:</strong> #<span id="previewLoanId"></span></p>
               <p><strong>Member:</strong> <span id="previewReturnMember"></span></p>
               <p><strong>Book:</strong> <span id="previewReturnBook"></span></p>
               <p><strong>Borrowed:</strong> <span id="previewBorrowDate"></span> | <strong>Due:</strong> <span id="previewDueDate"></span></p>
             </div>
-
             <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg font-medium disabled:opacity-50" disabled>
               Confirm Return
             </button>
           </form>
         </div>
-
         <!-- Active Loans Table -->
         <div class="bg-white p-6 rounded-xl shadow-sm border">
           <h3 class="text-lg font-medium text-gray-800 mb-4">📚 Active Loans</h3>
@@ -201,15 +189,11 @@
           </div>
         </div>
       </section>
-
     </main>
-
     <footer class="bg-white border-t py-4 text-center text-gray-500 text-sm">
       Library Management App © <span id="year"></span>
     </footer>
-
   </div>
-
   <!-- Icons -->
   <svg class="hidden">
     <defs>
@@ -219,9 +203,10 @@
       <g id="arrow-down-on-square"><path d="M9 3.75H6.912a2.25 2.25 0 00-2.244 2.077L4.5 6.5v11.5a2.25 2.25 0 002.25 2.25h10.5a2.25 2.25 0 002.25-2.25V8.577a2.25 2.25 0 00-.672-1.645L19.088 6.5H17.25M9 3.75l3 3m0 0l3-3m-3 3V15"/></g>
       <g id="arrow-up-on-square"><path d="M9 3.75H6.912a2.25 2.25 0 00-2.244 2.077L4.5 6.5v11.5a2.25 2.25 0 002.25 2.25h10.5a2.25 2.25 0 002.25-2.25V8.577a2.25 2.25 0 00-.672-1.645L19.088 6.5H17.25M9 3.75l3 3m0 0l3-3m-3 3V15"/></g>
       <g id="clock"><circle cx="12" cy="12" r="7"/><path d="M12 8v4l2 2"/></g>
+      <!-- Icon for Refresh Button -->
+      <g id="arrow-path"><path d="M12 4.5a7.5 7.5 0 1 0 7.5 7.5m0 0L21 12m-1.5 0-1.5-1.5M12 4.5v1.5m0 9v1.5"/></g>
     </defs>
   </svg>
-
   <!-- Modals -->
   <div id="addBookModal" class="modal">
     <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
@@ -242,7 +227,6 @@
       </form>
     </div>
   </div>
-
   <div id="addMemberModal" class="modal">
     <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
       <div class="flex justify-between items-center mb-4">
@@ -259,11 +243,9 @@
       </form>
     </div>
   </div>
-
   <!-- Toast -->
   <div id="toast" class="toast bg-green-500">Action completed!</div>
-
-    <script>
+  <script>
     // Initial Data
     const initialBooks = [
       { title: "To Kill a Mockingbird", author: "Harper Lee", isbn: "9780061120084", genre: "Fiction", year: 1960, copies: 3, available: 2 },
@@ -307,7 +289,7 @@
         document.querySelectorAll('.tab-active').forEach(t => t.classList.remove('tab-active'));
         document.querySelectorAll('.tab-inactive').forEach(t => t.classList.remove('tab-inactive'));
         tab.classList.add('tab-active');
-        // Ensure other tabs are set to inactive (this part was slightly confusing in original)
+        // Ensure other tabs are set to inactive
         document.querySelectorAll('.nav-link').forEach(t => {
             if (t !== tab) {
                 t.classList.remove('tab-active');
@@ -364,7 +346,7 @@
          }, 150);
       };
 
-      // Remove existing listeners to prevent duplicates (good practice if called multiple times)
+      // Remove existing listeners to prevent duplicates
       input.removeEventListener('input', handleInput);
       input.removeEventListener('blur', handleBlur);
 
@@ -645,6 +627,69 @@
       const el = document.getElementById('recent-activity');
       el.innerHTML = logs.map(log => `<li class="py-1 text-sm">${log}</li>`).join('');
     }
+
+    // --- Add Member Form Handling ---
+    document.addEventListener('DOMContentLoaded', function() {
+        const addMemberForm = document.getElementById('addMemberForm');
+        if (addMemberForm) {
+            addMemberForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const formData = new FormData(this);
+                const name = formData.get('name').trim();
+                const email = formData.get('email').trim();
+                const phone = formData.get('phone').trim();
+
+                if (!name || !email || !phone) {
+                    showToast('Please fill in all fields.', true);
+                    return;
+                }
+
+                // Generate new member ID
+                let maxIdNumber = 0;
+                members.forEach(member => {
+                    const idNumber = parseInt(member.id.substring(1), 10);
+                    if (!isNaN(idNumber) && idNumber > maxIdNumber) {
+                        maxIdNumber = idNumber;
+                    }
+                });
+                const newId = `M${String(maxIdNumber + 1).padStart(4, '0')}`;
+
+                const newMember = {
+                    id: newId,
+                    name: name,
+                    email: email,
+                    phone: phone,
+                    joinDate: new Date().toISOString().split('T')[0]
+                };
+
+                members.push(newMember);
+                saveData();
+                renderMembers();
+                updateDashboard();
+                logActivity(`New member added: ${newMember.name} (${newMember.id})`);
+                showToast(`✅ Member "${newMember.name}" added successfully!`);
+
+                this.reset();
+                // Close modal (assuming hash-based navigation)
+                window.location.hash = '';
+            });
+        }
+
+        // --- Refresh Books Button Handling ---
+        const refreshBtn = document.getElementById('refreshBooksBtn');
+        const globalSearchInput = document.getElementById('searchBookGlobal');
+
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', function() {
+                const filterValue = globalSearchInput ? globalSearchInput.value.toLowerCase() : '';
+                renderBooks(filterValue);
+                showToast('📚 Book list refreshed!');
+            });
+        }
+    });
+    // --- End of new form/button handlers ---
+
     // Initialize
     function init() {
       updateDashboard();
@@ -670,8 +715,6 @@
                 }
            });
       }
-
-
     }
     window.onload = init;
   </script>
