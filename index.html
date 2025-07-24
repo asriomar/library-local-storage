@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-50">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>📚 Library Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@heroicons/v2@1.0.0/outline/index.js" type="module"></script>
+  <style>
+    .modal { display: none; position: fixed; z-index: 50; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+    .modal:target { display: flex; }
+    .close-btn { position: absolute; top: 10px; right: 15px; font-size: 28px; color: #aaa; cursor: pointer; }
+    .close-btn:hover { color: black; }
+    .tab-active { @apply bg-blue-600 text-white font-medium; }
+    .tab-inactive { @apply text-gray-700 hover:bg-gray-200; }
+    .toast { @apply fixed bottom-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg text-white opacity-0 transition-opacity duration-300 max-w-md text-center; }
+    .search-dropdown { @apply absolute z-10 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-40 overflow-y-auto; }
+    .search-option { @apply p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0 text-sm; }
+    .loan-preview { @apply p-4 bg-blue-50 rounded-lg border border-blue-200 space-y-2 text-sm; }
+  </style>
+</head>
+<body class="h-full font-sans antialiased">
+
+  <div class="flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+      <div class="max-w-6xl mx-auto px-4 py-4">
+        <h1 class="text-2xl font-bold text-blue-700 flex items-center gap-2">
+          <svg class="w-7 h-7 inline"> <use href="#book-open"></use> </svg>
+          Library Management System
+        </h1>
+        <p class="text-gray-600 text-sm">Smart search for borrow & return</p>
+      </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="bg-white border-b shadow-sm">
+      <div class="max-w-6xl mx-auto px-4">
+        <ul class="flex space-x-1">
+          <li><a href="#dashboard" class="tab nav-link tab-active" data-tab="dashboard">📊 Dashboard</a></li>
+          <li><a href="#books" class="tab nav-link tab-inactive" data-tab="books">📘 Books</a></li>
+          <li><a href="#members" class="tab nav-link tab-inactive" data-tab="members">👥 Members</a></li>
+          <li><a href="#loans" class="tab nav-link tab-inactive" data-tab="loans">🔁 Borrow & Return</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Main -->
+    <main class="flex-1 container mx-auto px-4 py-6 max-w-6xl space-y-6">
+
+      <!-- Dashboard -->
+      <section id="dashboard" class="tab-content">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div class="bg-white p-6 rounded-xl shadow-sm text-center border">
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Total Books</h3>
+            <p id="total-books" class="text-3xl font-bold text-blue-600 mt-2">0</p>
+          </div>
+          <div class="bg-white p-6 rounded-xl shadow-sm text-center border">
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Members</h3>
+            <p id="total-members" class="text-3xl font-bold text-green-600 mt-2">0</p>
+          </div>
+          <div class="bg-white p-6 rounded-xl shadow-sm text-center border">
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">On Loan</h3>
+            <p id="borrowed-books" class="text-3xl font-bold text-yellow-600 mt-2">0</p>
+          </div>
+          <div class="bg-white p-6 rounded-xl shadow-sm text-center border">
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Overdue</h3>
+            <p id="overdue-books" class="text-3xl font-bold text-red-600 mt-2">0</p>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border">
+          <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5"> <use href="#clock"></use> </svg>
+            Recent Activity
+          </h2>
+          <ul id="recent-activity" class="text-gray-700 divide-y text-sm">
+            <li>Loading...</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Books -->
+      <section id="books" class="tab-content hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-5 gap-3">
+          <h2 class="text-2xl font-semibold text-gray-800">📘 Books</h2>
+          <a href="#addBookModal" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 w-full sm:w-auto">
+            <svg class="w-4 h-4"> <use href="#plus"></use> </svg> Add Book
+          </a>
+        </div>
+        <div class="mb-5">
+          <input type="text" id="searchBookGlobal" placeholder="🔍 Search by title, author, or genre..."
+                 class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div id="books-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <!-- Filled by JS -->
+        </div>
+      </section>
+
+      <!-- Members -->
+      <section id="members" class="tab-content hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-5 gap-3">
+          <h2 class="text-2xl font-semibold text-gray-800">👥 Members</h2>
+          <a href="#addMemberModal" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 w-full sm:w-auto">
+            <svg class="w-4 h-4"> <use href="#user-plus"></use> </svg> Add Member
+          </a>
+        </div>
+        <div class="mb-5">
+          <input type="text" id="searchMemberGlobal" placeholder="🔍 Search by name or ID..."
+                 class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+        </div>
+        <div id="members-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <!-- Filled by JS -->
+        </div>
+      </section>
+
+      <!-- Loans -->
+      <section id="loans" class="tab-content hidden">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-6">🔁 Borrow & Return</h2>
+
+        <!-- Borrow -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border mb-8">
+          <h3 class="text-lg font-medium text-gray-800 mb-5 flex items-center gap-2">
+            <svg class="w-5 h-5"> <use href="#arrow-down-on-square"></use> </svg>
+            Borrow a Book
+          </h3>
+          <form id="borrowForm" class="space-y-5">
+            <div class="relative">
+              <label class="block text-gray-700 font-medium mb-1">Search Member (ID or Name)</label>
+              <input type="text" id="searchMemberInput" placeholder="Type member ID or name..." class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"/>
+              <div id="memberResults" class="search-dropdown hidden"></div>
+            </div>
+
+            <div class="relative">
+              <label class="block text-gray-700 font-medium mb-1">Search Book (ISBN, Title, Author)</label>
+              <input type="text" id="searchBookInput" placeholder="Type ISBN, title, or author..." class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"/>
+              <div id="bookResults" class="search-dropdown hidden"></div>
+            </div>
+
+            <div id="borrowPreview" class="hidden loan-preview">
+              <p><strong>Member:</strong> <span id="previewMemberName"></span> (<span id="previewMemberId"></span>)</p>
+              <p><strong>Book:</strong> <span id="previewBookTitle"></span> by <span id="previewBookAuthor"></span></p>
+              <p id="availabilityStatus" class="font-medium"></p>
+            </div>
+
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-medium disabled:opacity-50" disabled>
+              Confirm Borrow
+            </button>
+          </form>
+        </div>
+
+        <!-- Return -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border mb-8">
+          <h3 class="text-lg font-medium text-gray-800 mb-5 flex items-center gap-2">
+            <svg class="w-5 h-5"> <use href="#arrow-up-on-square"></use> </svg>
+            Return a Book
+          </h3>
+          <form id="returnForm" class="space-y-5">
+            <div class="relative">
+              <label class="block text-gray-700 font-medium mb-1">Search Member or Book (ID, Name, ISBN, Title)</label>
+              <input
+                type="text"
+                id="searchReturnInput"
+                placeholder="Search by member or book..."
+                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              />
+              <div id="returnResults" class="search-dropdown hidden"></div>
+            </div>
+
+            <div id="returnPreview" class="hidden loan-preview">
+              <p><strong>Loan ID:</strong> #<span id="previewLoanId"></span></p>
+              <p><strong>Member:</strong> <span id="previewReturnMember"></span></p>
+              <p><strong>Book:</strong> <span id="previewReturnBook"></span></p>
+              <p><strong>Borrowed:</strong> <span id="previewBorrowDate"></span> | <strong>Due:</strong> <span id="previewDueDate"></span></p>
+            </div>
+
+            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg font-medium disabled:opacity-50" disabled>
+              Confirm Return
+            </button>
+          </form>
+        </div>
+
+        <!-- Active Loans Table -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border">
+          <h3 class="text-lg font-medium text-gray-800 mb-4">📚 Active Loans</h3>
+          <div class="overflow-x-auto">
+            <table class="min-w-full border-collapse">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="border px-4 py-3 text-left text-sm font-semibold">ID</th>
+                  <th class="border px-4 py-3 text-left text-sm font-semibold">Member</th>
+                  <th class="border px-4 py-3 text-left text-sm font-semibold">Book</th>
+                  <th class="border px-4 py-3 text-left text-sm font-semibold">Borrowed</th>
+                  <th class="border px-4 py-3 text-left text-sm font-semibold">Due</th>
+                  <th class="border px-4 py-3 text-left text-sm font-semibold">Status</th>
+                </tr>
+              </thead>
+              <tbody id="loans-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="bg-white border-t py-4 text-center text-gray-500 text-sm">
+      Library Management App © <span id="year"></span>
+    </footer>
+
+  </div>
+
+  <!-- Icons -->
+  <svg class="hidden">
+    <defs>
+      <g id="book-open"><path d="M4.5 4.5a3 3 0 013-3h9a3 3 0 013 3v15a3 3 0 01-3 3h-9a3 3 0 01-3-3v-15z"/><path d="M12 9a3 3 0 100 6 3 3 0 000-6z"/></g>
+      <g id="plus"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></g>
+      <g id="user-plus"><path d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a9 9 0 11-13.5 13.5A9 9 0 0115.75 3.375z"/></g>
+      <g id="arrow-down-on-square"><path d="M9 3.75H6.912a2.25 2.25 0 00-2.244 2.077L4.5 6.5v11.5a2.25 2.25 0 002.25 2.25h10.5a2.25 2.25 0 002.25-2.25V8.577a2.25 2.25 0 00-.672-1.645L19.088 6.5H17.25M9 3.75l3 3m0 0l3-3m-3 3V15"/></g>
+      <g id="arrow-up-on-square"><path d="M9 3.75H6.912a2.25 2.25 0 00-2.244 2.077L4.5 6.5v11.5a2.25 2.25 0 002.25 2.25h10.5a2.25 2.25 0 002.25-2.25V8.577a2.25 2.25 0 00-.672-1.645L19.088 6.5H17.25M9 3.75l3 3m0 0l3-3m-3 3V15"/></g>
+      <g id="clock"><circle cx="12" cy="12" r="7"/><path d="M12 8v4l2 2"/></g>
+    </defs>
+  </svg>
+
+  <!-- Modals -->
+  <div id="addBookModal" class="modal">
+    <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-semibold">➕ Add New Book</h3>
+        <a href="#" class="close-btn">&times;</a>
+      </div>
+      <form id="addBookForm" class="space-y-4">
+        <input name="title" placeholder="📘 Title" required class="w-full p-3 border rounded-lg"/>
+        <input name="author" placeholder="✍️ Author" required class="w-full p-3 border rounded-lg"/>
+        <input name="isbn" placeholder="🔢 ISBN" required class="w-full p-3 border rounded-lg"/>
+        <input name="genre" placeholder="🏷️ Genre" required class="w-full p-3 border rounded-lg"/>
+        <input name="year" type="number" placeholder="📅 Year" required class="w-full p-3 border rounded-lg"/>
+        <input name="copies" type="number" placeholder="📦 Copies" required min="1" class="w-full p-3 border rounded-lg"/>
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium">
+          Add Book
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div id="addMemberModal" class="modal">
+    <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-semibold">👥 Add Member</h3>
+        <a href="#" class="close-btn">&times;</a>
+      </div>
+      <form id="addMemberForm" class="space-y-4">
+        <input name="name" placeholder="👤 Full Name" required class="w-full p-3 border rounded-lg"/>
+        <input name="email" placeholder="✉️ Email" required class="w-full p-3 border rounded-lg"/>
+        <input name="phone" placeholder="📞 Phone" required class="w-full p-3 border rounded-lg"/>
+        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium">
+          Add Member
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast bg-green-500">Action completed!</div>
+
+    <script>
+    // Initial Data
+    const initialBooks = [
+      { title: "To Kill a Mockingbird", author: "Harper Lee", isbn: "9780061120084", genre: "Fiction", year: 1960, copies: 3, available: 2 },
+      { title: "1984", author: "George Orwell", isbn: "9780451524935", genre: "Dystopian", year: 1949, copies: 4, available: 4 },
+      { title: "The Great Gatsby", author: "F. Scott Fitzgerald", isbn: "9780743273565", genre: "Classic", year: 1925, copies: 2, available: 1 },
+      { title: "Dune", author: "Frank Herbert", isbn: "9780441172719", genre: "Sci-Fi", year: 1965, copies: 5, available: 5 },
+      { title: "Pride and Prejudice", author: "Jane Austen", isbn: "9780141439518", genre: "Romance", year: 1813, copies: 3, available: 3 }
+    ];
+    const initialMembers = [
+      { id: "M0001", name: "Alice Johnson", email: "alice@example.com", phone: "555-1234", joinDate: "2024-01-10" },
+      { id: "M0002", name: "Bob Smith", email: "bob@example.com", phone: "555-5678", joinDate: "2024-02-15" },
+      { id: "M0003", name: "Carol Davis", email: "carol@example.com", phone: "555-8765", joinDate: "2024-03-05" }
+    ];
+    const initialLoans = [
+      { id: 1, memberId: "M0001", bookIsbn: "9780061120084", borrowDate: "2024-04-01", dueDate: "2024-04-15", returned: false },
+      { id: 2, memberId: "M0002", bookIsbn: "9780451524935", borrowDate: "2024-04-03", dueDate: "2024-04-17", returned: false }
+    ];
+    // Load or initialize data
+    let books = JSON.parse(localStorage.getItem('library_books')) || initialBooks;
+    let members = JSON.parse(localStorage.getItem('library_members')) || initialMembers;
+    let loans = JSON.parse(localStorage.getItem('library_loans')) || initialLoans;
+    let nextLoanId = parseInt(localStorage.getItem('nextLoanId')) || 3;
+    // Save to localStorage
+    function saveData() {
+      localStorage.setItem('library_books', JSON.stringify(books));
+      localStorage.setItem('library_members', JSON.stringify(members));
+      localStorage.setItem('library_loans', JSON.stringify(loans));
+      localStorage.setItem('nextLoanId', nextLoanId);
+    }
+    // Toast
+    function showToast(msg, err = false) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = t.className.replace('bg-green-500', 'bg-red-500').replace('bg-red-500', err ? 'bg-red-500' : 'bg-green-500');
+      t.classList.remove('opacity-0');
+      setTimeout(() => t.classList.add('opacity-0'), 3000);
+    }
+    // Tab Switching
+    document.querySelectorAll('[data-tab]').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab-active').forEach(t => t.classList.remove('tab-active'));
+        document.querySelectorAll('.tab-inactive').forEach(t => t.classList.remove('tab-inactive'));
+        tab.classList.add('tab-active');
+        // Ensure other tabs are set to inactive (this part was slightly confusing in original)
+        document.querySelectorAll('.nav-link').forEach(t => {
+            if (t !== tab) {
+                t.classList.remove('tab-active');
+                t.classList.add('tab-inactive');
+            }
+        });
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+        document.getElementById(tab.dataset.tab).classList.remove('hidden');
+      });
+    });
+
+    // ------------------------------
+    // Smart Search Utility
+    // ------------------------------
+    function createSearch(inputId, resultsId, filterFn, onSelect) {
+      const input = document.getElementById(inputId);
+      const results = document.getElementById(resultsId);
+
+      const handleInput = (e) => {
+        const value = e.target.value.trim().toLowerCase();
+        results.innerHTML = '';
+        results.classList.add('hidden');
+        if (!value) return;
+        const matches = filterFn(value);
+        if (matches.length === 0) {
+          const li = document.createElement('div');
+          li.className = 'search-option text-gray-500';
+          li.textContent = 'No results found';
+          results.appendChild(li);
+          results.classList.remove('hidden');
+          return;
+        }
+        matches.forEach(item => {
+          const li = document.createElement('div');
+          li.className = 'search-option';
+          li.innerHTML = item.label;
+          li.onclick = () => {
+            onSelect(item.data); // Use 'data' property
+            input.value = item.display || item.label.replace(/<[^>]*>/g, '');
+            results.classList.add('hidden');
+          };
+          results.appendChild(li);
+        });
+        results.classList.remove('hidden');
+      };
+
+      const handleBlur = () => {
+         // Use a short timeout to allow clicks on results to register
+         setTimeout(() => {
+             // Only hide if the active element is NOT a child of this specific results dropdown
+             if (!results.contains(document.activeElement)) {
+                 results.classList.add('hidden');
+             }
+         }, 150);
+      };
+
+      // Remove existing listeners to prevent duplicates (good practice if called multiple times)
+      input.removeEventListener('input', handleInput);
+      input.removeEventListener('blur', handleBlur);
+
+      input.addEventListener('input', handleInput);
+      input.addEventListener('blur', handleBlur);
+    }
+
+     // ------------------------------
+    // Global Search Logic
+    // ------------------------------
+    document.getElementById('searchBookGlobal').addEventListener('input', (e) => {
+        const filter = e.target.value.toLowerCase();
+        renderBooks(filter);
+    });
+
+    document.getElementById('searchMemberGlobal').addEventListener('input', (e) => {
+        const filter = e.target.value.toLowerCase();
+        renderMembers(filter);
+    });
+
+
+    // ------------------------------
+    // BORROW Logic
+    // ------------------------------
+    let selectedMember = null;
+    let selectedBook = null;
+
+    // Reset Borrow Form State Helper
+    function resetBorrowForm() {
+        const borrowForm = document.getElementById('borrowForm');
+        borrowForm.reset(); // Resets input values
+        document.getElementById('memberResults').innerHTML = '';
+        document.getElementById('bookResults').innerHTML = '';
+        document.getElementById('borrowPreview').classList.add('hidden');
+        document.getElementById('availabilityStatus').textContent = ''; // Clear status
+        selectedMember = null;
+        selectedBook = null;
+        const borrowBtn = document.querySelector('#borrowForm button[type="submit"]');
+        if (borrowBtn) borrowBtn.disabled = true;
+    }
+
+    createSearch('searchMemberInput', 'memberResults',
+      (val) => members
+        .filter(m => m.id.toLowerCase().includes(val) || m.name.toLowerCase().includes(val))
+        .map(m => ({
+          label: `<strong>${m.name}</strong> <span class="text-gray-600">(${m.id})</span>`,
+          data: m // Fix: Use 'data' property
+        })),
+      (member) => {
+        selectedMember = member;
+        checkBorrowReady();
+      }
+    );
+
+    createSearch('searchBookInput', 'bookResults',
+      (val) => books
+        .filter(b => b.isbn.includes(val) || b.title.toLowerCase().includes(val) || b.author.toLowerCase().includes(val))
+        .map(b => ({
+          label: `<strong>${b.title}</strong> by ${b.author} <span class="text-gray-600">[${b.isbn}]</span>`,
+          data: b // Fix: Use 'data' property
+        })),
+      (book) => {
+        selectedBook = book;
+        checkBorrowReady();
+      }
+    );
+
+    function checkBorrowReady() {
+      const btn = document.querySelector('#borrowForm button[type="submit"]');
+      const preview = document.getElementById('borrowPreview');
+      const status = document.getElementById('availabilityStatus');
+      if (!selectedMember || !selectedBook) {
+        btn.disabled = true;
+        preview.classList.add('hidden');
+        return;
+      }
+      const book = books.find(b => b.isbn === selectedBook.isbn);
+      const available = book ? book.available : 0;
+      if (available <= 0) {
+        status.textContent = `❌ "${selectedBook.title}" is out of stock.`;
+        status.className = 'text-red-600';
+        btn.disabled = true;
+      } else {
+        status.textContent = `✅ "${selectedBook.title}" is available (${available} copies).`;
+        status.className = 'text-green-600';
+        btn.disabled = false;
+      }
+      document.getElementById('previewMemberName').textContent = selectedMember.name;
+      document.getElementById('previewMemberId').textContent = selectedMember.id;
+      document.getElementById('previewBookTitle').textContent = selectedBook.title;
+      document.getElementById('previewBookAuthor').textContent = selectedBook.author;
+      preview.classList.remove('hidden');
+    }
+
+    document.getElementById('borrowForm').addEventListener('submit', e => {
+      e.preventDefault();
+      if (!selectedMember || !selectedBook) {
+        showToast('Please select both a member and a book.', true);
+        return;
+      }
+      const book = books.find(b => b.isbn === selectedBook.isbn);
+      if (!book) {
+        showToast('Book not found.', true);
+        return;
+      }
+      if (book.available <= 0) {
+        showToast('This book is not available.', true);
+        return;
+      }
+      const due = new Date();
+      due.setDate(due.getDate() + 14);
+      const loan = {
+        id: nextLoanId++,
+        memberId: selectedMember.id,
+        bookIsbn: book.isbn,
+        borrowDate: new Date().toISOString().split('T')[0],
+        dueDate: due.toISOString().split('T')[0],
+        returned: false
+      };
+      loans.push(loan);
+      book.available--;
+      saveData();
+      // Reset using helper
+      resetBorrowForm();
+      updateLoansList();
+      updateDashboard();
+      logActivity(`${selectedMember.name} borrowed "${selectedBook.title}"`);
+      showToast('✅ Book borrowed successfully!');
+    });
+
+    // ------------------------------
+    // RETURN Logic
+    // ------------------------------
+    let selectedLoan = null;
+
+    // Reset Return Form State Helper
+    function resetReturnForm() {
+        const returnForm = document.getElementById('returnForm');
+        returnForm.reset(); // Resets input values
+        document.getElementById('returnResults').innerHTML = '';
+        document.getElementById('returnPreview').classList.add('hidden');
+        selectedLoan = null;
+        const returnBtn = document.querySelector('#returnForm button[type="submit"]');
+        if (returnBtn) returnBtn.disabled = true;
+    }
+
+    createSearch('searchReturnInput', 'returnResults',
+      (val) => {
+        return loans
+          .filter(l => !l.returned)
+          .map(l => {
+            const member = members.find(m => m.id === l.memberId);
+            const book = books.find(b => b.isbn === l.bookIsbn);
+            if (!member || !book) return null;
+            const match = [
+              member.id, member.name, book.isbn, book.title, book.author
+            ].some(field => field && field.toString().toLowerCase().includes(val));
+            // Fix: Return an object with a 'data' property
+            return match ? { data: { loan: l, member, book }, label: `<strong>Loan ID: ${l.id}</strong> - ${member.name} (${member.id}) | ${book.title} by ${book.author}` } : null;
+          })
+          .filter(Boolean);
+      },
+      (result) => { // Fix: Expect the 'data' object
+        selectedLoan = result.loan;
+        const member = result.member;
+        const book = result.book;
+        document.getElementById('previewLoanId').textContent = selectedLoan.id;
+        document.getElementById('previewReturnMember').textContent = `${member.name} (${member.id})`;
+        document.getElementById('previewReturnBook').textContent = `${book.title} by ${book.author}`;
+        document.getElementById('previewBorrowDate').textContent = selectedLoan.borrowDate;
+        document.getElementById('previewDueDate').textContent = selectedLoan.dueDate;
+        document.getElementById('returnPreview').classList.remove('hidden');
+        document.querySelector('#returnForm button[type="submit"]').disabled = false;
+      }
+    );
+
+    document.getElementById('returnForm').addEventListener('submit', e => {
+      e.preventDefault();
+      if (!selectedLoan) {
+        showToast('No loan selected.', true);
+        return;
+      }
+      const loan = loans.find(l => l.id === selectedLoan.id);
+      if (!loan || loan.returned) {
+        showToast('Loan not active or already returned.', true);
+        return;
+      }
+      const book = books.find(b => b.isbn === loan.bookIsbn);
+      const member = members.find(m => m.id === loan.memberId);
+      if (!book || !member) {
+        showToast('Invalid loan data.', true);
+        return;
+      }
+      loan.returned = true;
+      book.available++;
+      saveData();
+      // Reset using helper
+      resetReturnForm();
+      updateLoansList();
+      logActivity(`${member.name} returned "${book.title}"`);
+      showToast('✅ Book returned successfully!');
+    });
+
+    // ------------------------------
+    // Other Functions
+    // ------------------------------
+    function renderBooks(filter = '') {
+      const container = document.getElementById('books-list');
+      container.innerHTML = '';
+      const filtered = books.filter(b =>
+        b.title.toLowerCase().includes(filter) ||
+        b.author.toLowerCase().includes(filter) ||
+        b.genre.toLowerCase().includes(filter)
+      );
+      filtered.forEach(b => {
+        const card = document.createElement('div');
+        card.className = 'bg-white p-5 rounded-xl shadow border';
+        card.innerHTML = `
+          <h3 class="font-bold">${b.title}</h3>
+          <p class="text-gray-600">by ${b.author}</p>
+          <p class="text-xs text-gray-500">ISBN: ${b.isbn}</p>
+          <div class="mt-2 font-medium ${b.available > 0 ? 'text-green-600' : 'text-red-600'}">
+            ${b.available} of ${b.copies} available
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+    function renderMembers(filter = '') {
+      const container = document.getElementById('members-list');
+      container.innerHTML = '';
+      const filtered = members.filter(m =>
+        m.name.toLowerCase().includes(filter) || m.id.includes(filter)
+      );
+      filtered.forEach(m => {
+        const card = document.createElement('div');
+        card.className = 'bg-white p-5 rounded-xl shadow border';
+        card.innerHTML = `<h3 class="font-bold">${m.name}</h3><p class="text-sm">ID: ${m.id}</p><p class="text-sm">📧 ${m.email}</p>`;
+        container.appendChild(card);
+      });
+    }
+    function updateLoansList() {
+      const tbody = document.getElementById('loans-body');
+      tbody.innerHTML = '';
+      const today = new Date();
+      let overdue = 0;
+      loans.filter(l => !l.returned).forEach(loan => {
+        const book = books.find(b => b.isbn === loan.bookIsbn);
+        const member = members.find(m => m.id === loan.memberId);
+        const due = new Date(loan.dueDate);
+        const isOverdue = due < today;
+        if (isOverdue) overdue++;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="border px-4 py-2">${loan.id}</td>
+          <td class="border px-4 py-2">${member?.name || 'Unknown'}</td>
+          <td class="border px-4 py-2">${book?.title || 'Unknown'}</td>
+          <td class="border px-4 py-2">${loan.borrowDate}</td>
+          <td class="border px-4 py-2 ${isOverdue ? 'text-red-600' : ''}">${loan.dueDate}</td>
+          <td class="border px-4 py-2 ${isOverdue ? 'text-red-600 font-bold' : 'text-green-600'}">
+            ${isOverdue ? 'Overdue' : 'Active'}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      document.getElementById('overdue-books').textContent = overdue;
+      document.getElementById('borrowed-books').textContent = loans.filter(l => !l.returned).length;
+    }
+    function updateDashboard() {
+      document.getElementById('total-books').textContent = books.length;
+      document.getElementById('total-members').textContent = members.length;
+    }
+    function logActivity(msg) {
+      const logs = JSON.parse(localStorage.getItem('activity') || '[]');
+      logs.unshift(`[${new Date().toLocaleString()}] ${msg}`);
+      if (logs.length > 10) logs.pop();
+      localStorage.setItem('activity', JSON.stringify(logs));
+      const el = document.getElementById('recent-activity');
+      el.innerHTML = logs.map(log => `<li class="py-1 text-sm">${log}</li>`).join('');
+    }
+    // Initialize
+    function init() {
+      updateDashboard();
+      renderBooks(); // Initial render without filter
+      renderMembers(); // Initial render without filter
+      updateLoansList();
+      logActivity('App started');
+      document.getElementById('year').textContent = new Date().getFullYear();
+
+      // Set initial tab state correctly
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+      document.getElementById('dashboard').classList.remove('hidden'); // Show dashboard by default
+      // Ensure Dashboard tab is active
+      const dashboardTab = document.querySelector('[data-tab="dashboard"]');
+      if (dashboardTab) {
+          dashboardTab.classList.add('tab-active');
+          dashboardTab.classList.remove('tab-inactive');
+          // Make other tabs inactive
+           document.querySelectorAll('.nav-link').forEach(t => {
+                if (t.dataset.tab !== "dashboard") {
+                    t.classList.remove('tab-active');
+                    t.classList.add('tab-inactive');
+                }
+           });
+      }
+
+
+    }
+    window.onload = init;
+  </script>
+</body>
+</html>
